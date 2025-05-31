@@ -38,7 +38,7 @@ async function deleteVisibleCommentsByAuthor(targetAuthor) {
   return deletedCount;
 }
 
-async function autoScrollAndDeleteUntilDone(targetAuthor) {
+async function autoScrollAndDeleteCommentsWithRefresh(targetAuthor, reloadThreshold = 50) {
   console.log("*** Börjar auto-radering av kommentarer för:", targetAuthor, "***");
 
   let lastHeight = 0;
@@ -46,13 +46,18 @@ async function autoScrollAndDeleteUntilDone(targetAuthor) {
   let consecutiveNoNewComments = 0;
 
   while (true) {
-    // Radera kommentarer som syns
     const deleted = await deleteVisibleCommentsByAuthor(targetAuthor);
     totalDeleted += deleted;
 
-    // Skrolla längst ner
+    // Om vi nått gränsen, ladda om sidan
+    if (totalDeleted >= reloadThreshold) {
+      console.log("*** Nådde", reloadThreshold, "raderade kommentarer – laddar om sidan! ***");
+      location.reload();
+      break;
+    }
+
     window.scrollTo(0, document.body.scrollHeight);
-    await sleep(3); // Vänta på att nya kommentarer laddas in
+    await sleep(3);
 
     const newHeight = document.body.scrollHeight;
 
@@ -64,7 +69,6 @@ async function autoScrollAndDeleteUntilDone(targetAuthor) {
 
     lastHeight = newHeight;
 
-    // Om vi haft 3 rundor där inga nya kommentarer laddats => KLAR!
     if (consecutiveNoNewComments >= 3) {
       console.log("*** Klar! Totalt raderade kommentarer:", totalDeleted, "***");
       break;
@@ -72,5 +76,5 @@ async function autoScrollAndDeleteUntilDone(targetAuthor) {
   }
 }
 
-// Kör skriptet
-autoScrollAndDeleteUntilDone("Arne Hortell");
+// Kör
+autoScrollAndDeleteCommentsWithRefresh("Arne Hortell", 50);

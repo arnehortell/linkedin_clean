@@ -3,23 +3,19 @@ async function sleep(seconds) {
 }
 
 async function deleteVisiblePostsByAuthor(targetAuthor) {
-  // Leta upp alla inlägg som visas just nu
   const posts = document.querySelectorAll("div.feed-shared-update-v2");
   let deletedCount = 0;
 
   for (const post of posts) {
-    // Leta efter författarnamnet i inlägget
     const authorElement = post.querySelector(".update-components-header__text-view a");
     if (authorElement && authorElement.textContent.trim() === targetAuthor) {
       console.log(">>> Hittade inlägg av:", targetAuthor);
 
-      // Klicka på menyknappen (de tre prickarna)
       const controlMenuButton = post.querySelector(".feed-shared-control-menu__trigger");
       if (controlMenuButton) {
         controlMenuButton.click();
         await sleep(1);
 
-        // Leta upp och klicka på "Delete" eller "Ta bort"
         const deleteOption = Array.from(document.querySelectorAll(".artdeco-dropdown__item span"))
           .find(span => span.textContent.includes("Delete") || span.textContent.includes("Ta bort"));
 
@@ -42,7 +38,7 @@ async function deleteVisiblePostsByAuthor(targetAuthor) {
   return deletedCount;
 }
 
-async function autoScrollAndDeletePostsUntilDone(targetAuthor) {
+async function autoScrollAndDeletePostsWithRefresh(targetAuthor, reloadThreshold = 50) {
   console.log("*** Börjar auto-radering av inlägg för:", targetAuthor, "***");
 
   let lastHeight = 0;
@@ -53,9 +49,15 @@ async function autoScrollAndDeletePostsUntilDone(targetAuthor) {
     const deleted = await deleteVisiblePostsByAuthor(targetAuthor);
     totalDeleted += deleted;
 
-    // Skrolla längst ner
+    // Om vi nått gränsen, ladda om sidan
+    if (totalDeleted >= reloadThreshold) {
+      console.log("*** Nådde", reloadThreshold, "raderingar – laddar om sidan! ***");
+      location.reload();
+      break;
+    }
+
     window.scrollTo(0, document.body.scrollHeight);
-    await sleep(3); // Vänta på att nya inlägg laddas in
+    await sleep(3);
 
     const newHeight = document.body.scrollHeight;
 
@@ -67,7 +69,7 @@ async function autoScrollAndDeletePostsUntilDone(targetAuthor) {
 
     lastHeight = newHeight;
 
-    // Om inga nya inlägg laddats i 3 rundor => KLAR
+    // Om inga nya inlägg laddats på 3 rundor – klart!
     if (consecutiveNoNewPosts >= 3) {
       console.log("*** Klar! Totalt raderade inlägg:", totalDeleted, "***");
       break;
@@ -75,5 +77,5 @@ async function autoScrollAndDeletePostsUntilDone(targetAuthor) {
   }
 }
 
-// Kör skriptet
-autoScrollAndDeletePostsUntilDone("Arne Hortell");
+// Kör
+autoScrollAndDeletePostsWithRefresh("Arne Hortell", 50);
