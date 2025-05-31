@@ -2,6 +2,14 @@ async function sleep(seconds) {
   return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }
 
+function dismissToastIfVisible() {
+  const dismissBtn = document.querySelector(".artdeco-toast-item__dismiss");
+  if (dismissBtn) {
+    dismissBtn.click();
+    console.log(">>> Stängde 'Comment deleted' notis");
+  }
+}
+
 async function deleteVisibleCommentsByAuthor(targetAuthor) {
   const comments = document.querySelectorAll("article.comments-comment-entity");
   let deletedCount = 0;
@@ -26,9 +34,12 @@ async function deleteVisibleCommentsByAuthor(targetAuthor) {
           const confirmButton = document.querySelector("button.artdeco-button--primary");
           if (confirmButton) {
             confirmButton.click();
-            console.log(">>> Raderade kommentar av:", targetAuthor);
-            deletedCount++;
             await sleep(2);
+
+            // 🟢 Dismiss toast efter borttagning
+            dismissToastIfVisible();
+
+            deletedCount++;
           }
         }
       }
@@ -49,7 +60,6 @@ async function autoScrollAndDeleteCommentsWithRefresh(targetAuthor, reloadThresh
     const deleted = await deleteVisibleCommentsByAuthor(targetAuthor);
     totalDeleted += deleted;
 
-    // Om vi nått gränsen, ladda om sidan
     if (totalDeleted >= reloadThreshold) {
       console.log("*** Nådde", reloadThreshold, "raderade kommentarer – laddar om sidan! ***");
       location.reload();
