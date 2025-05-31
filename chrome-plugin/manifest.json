@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "LinkedIn Auto-Delete by Author",
+  "version": "1.0",
+  "description": "Raderar automatiskt inlägg eller kommentarer av valfri författare på LinkedIn",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "LinkedIn Auto-Delete"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.linkedin.com/*"
+  ],
+  "icons": {
+    "48": "icon48.png"
+  }
+}
