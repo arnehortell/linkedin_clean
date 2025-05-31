@@ -2,6 +2,14 @@ async function sleep(seconds) {
   return new Promise(resolve => setTimeout(resolve, seconds * 1000));
 }
 
+function dismissToastIfVisible() {
+  const dismissBtn = document.querySelector(".artdeco-toast-item__dismiss");
+  if (dismissBtn) {
+    dismissBtn.click();
+    console.log(">>> Stängde toast-notis");
+  }
+}
+
 async function deleteVisiblePostsByAuthor(targetAuthor) {
   const posts = document.querySelectorAll("div.feed-shared-update-v2");
   let deletedCount = 0;
@@ -26,9 +34,12 @@ async function deleteVisiblePostsByAuthor(targetAuthor) {
           const confirmButton = document.querySelector("button.artdeco-button--primary");
           if (confirmButton) {
             confirmButton.click();
-            console.log(">>> Raderade inlägg av:", targetAuthor);
-            deletedCount++;
             await sleep(2);
+
+            // 🟢 Dismiss toast efter borttagning
+            dismissToastIfVisible();
+
+            deletedCount++;
           }
         }
       }
@@ -49,9 +60,8 @@ async function autoScrollAndDeletePostsWithRefresh(targetAuthor, reloadThreshold
     const deleted = await deleteVisiblePostsByAuthor(targetAuthor);
     totalDeleted += deleted;
 
-    // Om vi nått gränsen, ladda om sidan
     if (totalDeleted >= reloadThreshold) {
-      console.log("*** Nådde", reloadThreshold, "raderingar – laddar om sidan! ***");
+      console.log("*** Nådde", reloadThreshold, "raderade inlägg – laddar om sidan! ***");
       location.reload();
       break;
     }
@@ -69,7 +79,6 @@ async function autoScrollAndDeletePostsWithRefresh(targetAuthor, reloadThreshold
 
     lastHeight = newHeight;
 
-    // Om inga nya inlägg laddats på 3 rundor – klart!
     if (consecutiveNoNewPosts >= 3) {
       console.log("*** Klar! Totalt raderade inlägg:", totalDeleted, "***");
       break;
